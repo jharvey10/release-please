@@ -1747,6 +1747,57 @@ describe('Manifest', () => {
       });
     });
 
+    it('should retain empty release-as commits when paths are excluded', async () => {
+      mockReleases(sandbox, github, [
+        {
+          id: 123456,
+          sha: 'abc123',
+          tagName: 'v1.0.0',
+          url: 'https://github.com/fake-owner/fake-repo/releases/tag/v1.0.0',
+        },
+      ]);
+      mockCommits(sandbox, github, [
+        {
+          sha: 'def456',
+          message: 'chore: force a release\n\nRelease-As: 1.0.1',
+          files: [],
+        },
+        {
+          sha: 'abc123',
+          message: 'chore: release 1.0.0',
+          files: [],
+          pullRequest: {
+            headBranchName: 'release-please/branches/main',
+            baseBranchName: 'main',
+            number: 123,
+            title: 'chore: release 1.0.0',
+            body: '',
+            labels: [],
+            files: [],
+            sha: 'abc123',
+          },
+        },
+      ]);
+      const manifest = new Manifest(
+        github,
+        'main',
+        {
+          '.': {
+            releaseType: 'simple',
+            excludePaths: ['syntax'],
+          },
+        },
+        {
+          '.': Version.parse('1.0.0'),
+        }
+      );
+
+      const pullRequests = await manifest.buildPullRequests();
+
+      expect(pullRequests).lengthOf(1);
+      expect(pullRequests[0].version?.toString()).to.eql('1.0.1');
+    });
+
     it('should find the component from config', async () => {
       mockReleases(sandbox, github, [
         {
