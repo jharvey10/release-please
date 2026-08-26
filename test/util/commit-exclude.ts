@@ -113,6 +113,26 @@ describe('commit-exclude', () => {
     expect(newCommitsPerPath['pkg3'].length).to.equal(2);
   });
 
+  it('should retain empty commits when paths are excluded', () => {
+    const commits: Record<string, Commit[]> = {
+      '.': [
+        {
+          sha: 'empty',
+          message: 'chore: force a release',
+          files: [],
+        },
+      ],
+    };
+    const config: Record<string, CommitExcludeConfig> = {
+      '.': {excludePaths: ['pkg3']},
+    };
+
+    const commitExclude = new CommitExclude(config);
+    const newCommitsPerPath = commitExclude.excludeCommits(commits);
+
+    expect(newCommitsPerPath['.']).to.deep.equal(commits['.']);
+  });
+
   it('should make decision only on relevant files', () => {
     const createCommit = (files: string[]) => {
       const first = files[0];
